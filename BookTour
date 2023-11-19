@@ -1,0 +1,98 @@
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import Navbar from './Navbar';
+
+
+const BookTour = () => {
+  const [requests, setRequests] = useState([]);
+  const [approvalMessage, setApprovalMessage] = useState('');
+
+  useEffect(() => {
+  
+    fetch('http://localhost:8090/faculty/rtours')
+      .then((response) => response.json())
+      .then((data) => setRequests(data))
+      .catch((error) => console.error('Error fetching requests: ', error));
+  }, []);
+
+ 
+
+  const handleApproval = async (requestId, approved) => {
+    try {
+      const response = await fetch(`http://localhost:8090/faculty/approve-rtour/${requestId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ approved }),
+      });
+
+      if (response.ok) {
+        // If the request is successful, remove the item from the local state
+        setRequests((prevRequests) =>
+          prevRequests.filter((request) => request.id !== requestId)
+        );
+
+        // Set approval message based on the approval status
+        const message = approved ? 'Request Approved' : 'Request Rejected';
+        setApprovalMessage(message);
+
+        // Show a success toast without displaying it
+        toast.success(message, { autoClose: false, hideProgressBar: true });
+      } else {
+        console.error('Error approving/rejecting request:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error approving/rejecting request:', error);
+    }
+  };
+
+  return (
+    <>
+    <div>
+      <Navbar/>
+    </div>
+    <div className="container mt-3">
+      <h2 className='text-center'>Tour Requests</h2>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Faculty Name</th>
+            <th>Department</th>
+            <th>Study Tour</th>
+            <th>Approved</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {requests.map((request) => (
+            <tr key={request.id}>
+              <td>{request.id}</td>
+              <td>{request.facultyName}</td>
+              <td>{request.department}</td>
+              <td>{request.studyTour}</td>
+              <td>{request.approved ? 'Yes' : 'No'}</td>
+              <td>
+                <button
+                  className="btn btn-success mx-2"
+                  onClick={() => handleApproval(request.id, true)}
+                >
+                  Approve
+                </button>
+                <button
+                  className="btn btn-danger mx-2"
+                  onClick={() => handleApproval(request.id, false)}
+                >
+                  Reject
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div></>
+  );
+};
+
+export default BookTour;
