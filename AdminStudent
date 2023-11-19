@@ -1,0 +1,250 @@
+import React, { useState, useEffect } from 'react';
+import  Navbar  from './Navbar';
+
+const AdminStudent = () => {
+  const [students, setStudents] = useState([]);
+  const [editedStudent, setEditedStudent] = useState(null);
+
+  useEffect(() => {
+    // Fetch the student data from the Spring Boot API when the component mounts
+    fetch('http://localhost:8090/student/all') // Update the URL to your API endpoint
+      .then((response) => response.json())
+      .then((data) => setStudents(data))
+      .catch((error) => console.error('Error fetching student data:', error));
+  }, []);
+
+  const handleDelete = (id) => {
+    // Send a DELETE request to your backend to delete the student
+    fetch(`http://localhost:8090/student/${id}`, {
+      method: 'DELETE',
+    })
+      .then(() => {
+        // Update the local state to reflect the deletion
+        setStudents((prevStudents) => prevStudents.filter((student) => student.id !== id));
+      })
+      .catch((error) => console.error('Error deleting student:', error));
+  };
+
+  const handleEdit = (student) => {
+    // Set the student to be edited
+    setEditedStudent(student);
+  };
+
+  const handleSave = () => {
+    // Send a PUT request to update the student data in the backend
+    fetch(`http://localhost:8090/student/${editedStudent.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(editedStudent),
+    })
+      .then(() => {
+        // Student updated successfully
+        // You can add a success message or perform any necessary actions
+        console.log('Student updated successfully');
+
+        // Close the modal after saving
+        setEditedStudent(null);
+      })
+      .catch((error) => console.error('Error updating student:', error));
+  };
+
+  const handleCancel = () => {
+    // Close the modal without saving
+    setEditedStudent(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedStudent({
+      ...editedStudent,
+      [name]: value,
+    });
+  };
+
+  return (
+    <>
+    <div>
+      <Navbar/>
+    </div>
+    <div>
+      <h2 className='text-center'>Admin View - Student Data</h2>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Password</th>
+            <th>Phone</th>
+            <th>Branch</th>
+            <th>Address</th>
+            <th>Select Route</th>
+            <th>Gender</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {students.map((student) => (
+            <tr key={student.id}>
+              <td>{student.id}</td>
+              <td>{student.username}</td>
+              <td>{student.email}</td>
+              <td>{student.password}</td>
+              <td>{student.phone}</td>
+              <td>{student.branch}</td>
+              <td>{student.address}</td>
+              <td>{student.selectroute}</td>
+              <td>{student.gender}</td>
+
+              <td>
+                <button className="btn btn-primary" onClick={() => handleEdit(student)}>
+                  Edit
+                </button>
+                <button className="btn btn-danger mx-3" onClick={() => handleDelete(student.id)}>
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {editedStudent && (
+  <div className="modal fade show" style={{ display: 'block' }}>
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">Edit Student Information</h5>
+          <button type="button" className="close" onClick={handleCancel}>
+            <span>&times;</span>
+          </button>
+        </div>
+        <div className="modal-body">
+          <form>
+            <div className="row">
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label>Username</label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={editedStudent.username}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="text"
+                    name="email"
+                    value={editedStudent.email}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={editedStudent.password}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Phone</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={editedStudent.phone}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Branch</label>
+                  <input
+                    type="text"
+                    name="branch"
+                    value={editedStudent.branch}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label>Address</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={editedStudent.address}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Select Route</label>
+                  <input
+                    type="text"
+                    name="selectroute"
+                    value={editedStudent.selectroute}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Gender</label>
+                  <div>
+                    <label className="form-check-label">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Male"
+                        checked={editedStudent.gender === "Male"}
+                        onChange={handleInputChange}
+                        className="form-check-input"
+                      />
+                      Male
+                    </label>
+                  </div>
+                  <div>
+                    <label className="form-check-label">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Female"
+                        checked={editedStudent.gender === "Female"}
+                        onChange={handleInputChange}
+                        className="form-check-input"
+                      />
+                      Female
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={handleCancel}>
+            Cancel
+          </button>
+          <button type="button" className="btn btn-primary" onClick={handleSave}>
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+    </div>
+    </>
+  );
+};
+
+export default AdminStudent;
