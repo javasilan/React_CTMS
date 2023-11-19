@@ -1,0 +1,238 @@
+import React, { useState, useEffect } from 'react';
+import  Navbar  from './Navbar';
+
+
+const AdminFaculty = () => {
+  const [faculty, setFaculty] = useState([]);
+  const [editingFaculty, setEditingFaculty] = useState(null);
+
+  useEffect(() => {
+    // Fetch faculty data from the Spring Boot API when the component mounts
+    fetch('http://localhost:8090/faculty/all') // Update the URL to your API endpoint
+      .then((response) => response.json())
+      .then((data) => setFaculty(data))
+      .catch((error) => console.error('Error fetching faculty data:', error));
+  }, []);
+
+  const handleDelete = (id) => {
+    // Send a DELETE request to your backend to delete the faculty
+    fetch(`http://localhost:8090/faculty/${id}`, {
+      method: 'DELETE',
+    })
+      .then(() => {
+        // Update the local state to reflect the deletion
+        setFaculty((prevFaculty) => prevFaculty.filter((faculty) => faculty.id !== id));
+      })
+      .catch((error) => console.error('Error deleting faculty:', error));
+  };
+
+  const handleEdit = (faculty) => {
+    // Set the faculty to be edited
+    setEditingFaculty(faculty);
+  };
+
+  const handleSave = (editedFaculty) => {
+    // Send a PUT request to update the faculty data in the backend
+    fetch(`http://localhost:8090/faculty/${editedFaculty.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(editedFaculty),
+    })
+      .then(() => {
+        // Faculty updated successfully
+        // You can add a success message or perform any necessary actions
+        console.log('Faculty updated successfully');
+
+        // Close the modal after saving
+        setEditingFaculty(null);
+      })
+      .catch((error) => console.error('Error updating faculty:', error));
+  };
+
+  const handleCancel = () => {
+    // Close the modal without saving
+    setEditingFaculty(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditingFaculty({
+      ...editingFaculty,
+      [name]: value,
+    });
+  };
+
+  return (
+    <>
+    <div>
+      <Navbar/>
+    </div>
+    <div>
+      <h2 className="text-center">Admin View - Faculty Data</h2>
+      <table className="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Department</th>
+            <th>Address</th>
+            <th>Select Route</th>
+            <th>Gender</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {faculty.map((faculty) => (
+            <tr key={faculty.id}>
+              <td>{faculty.id}</td>
+              <td>{faculty.username}</td>
+              <td>{faculty.email}</td>
+              <td>{faculty.phone}</td>
+              <td>{faculty.dept}</td>
+              <td>{faculty.address}</td>
+              <td>{faculty.selectroute}</td>
+              <td>{faculty.gender}</td>
+              <td>
+                <button className="btn btn-primary" onClick={() => handleEdit(faculty)}>
+                  Edit
+                </button>
+                <button className="btn btn-danger mx-3" onClick={() => handleDelete(faculty.id)}>
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {editingFaculty && (
+  <div className="modal fade show" style={{ display: 'block' }}>
+    <div className="modal-dialog">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">Edit Faculty Information</h5>
+          <button type="button" className="close" onClick={handleCancel}>
+            <span>&times;</span>
+          </button>
+        </div>
+        <div className="modal-body">
+          <form>
+            <div className="row">
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label>Username</label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={editingFaculty.username}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="text"
+                    name="email"
+                    value={editingFaculty.email}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Phone</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={editingFaculty.phone}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Gender</label>
+                  <div>
+                    <label className="form-check-label mx-3">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Male"
+                        checked={editingFaculty.gender === "Male"}
+                        onChange={handleInputChange}
+                        className="form-check-input"
+                      />
+                      Male
+                    </label>
+                  </div>
+                  <div>
+                    <label className="form-check-label mx-3">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Female"
+                        checked={editingFaculty.gender === "Female"}
+                        onChange={handleInputChange}
+                        className="form-check-input"
+                      />
+                      Female
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="form-group">
+                  <label>Dept</label>
+                  <input
+                    type="text"
+                    name="dept"
+                    value={editingFaculty.dept}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Address</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={editingFaculty.address}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Select Route</label>
+                  <input
+                    type="text"
+                    name="selectroute"
+                    value={editingFaculty.selectroute}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={handleCancel}>
+            Cancel
+          </button>
+          <button type="button" className="btn btn-primary" onClick={() => handleSave(editingFaculty)}>
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+    </div>
+    </>
+  );
+};
+
+export default AdminFaculty;
