@@ -1,0 +1,242 @@
+import React, { useState, useEffect } from 'react';
+import { Form, Button, Table, Card, Modal } from 'react-bootstrap';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Navbar from '../Admin/Navbar';
+
+const BusDriverForm = ({ onAddDriver }) => {
+  const [name, setName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [drivers, setDrivers] = useState([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingDriver, setEditingDriver] = useState(null);
+
+  useEffect(() => {
+    // Fetch data when the component mounts
+    const fetchData = async () => {
+      try {
+        const response = await fetch('http://localhost:8090/api/busdriver');
+        if (response.ok) {
+          const data = await response.json();
+          setDrivers(data);
+        } else {
+          console.error('Failed to fetch bus drivers');
+        }
+      } catch (error) {
+        console.error('Error fetching bus drivers:', error);
+      }
+    };
+
+    fetchData();
+  }, []); // Empty dependency array ensures that this effect runs once when the component mounts
+
+  const handleAddDriver = async () => {
+    const newDriver = { name, mobileNumber };
+    try {
+      const response = await fetch('http://localhost:8090/api/busdriver', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newDriver),
+      });
+
+      if (response.ok) {
+        onAddDriver(newDriver);
+
+        // After adding a new driver, fetch the updated list of drivers
+        const updatedResponse = await fetch('http://localhost:8090/api/busdriver');
+        if (updatedResponse.ok) {
+          const updatedData = await updatedResponse.json();
+          setDrivers(updatedData);
+        } else {
+          console.error('Failed to fetch updated bus drivers');
+        }
+
+        // Show success toast
+        
+      } else {
+        console.error('Failed to add bus driver');
+        // Show error toast
+       
+      }
+    } catch (error) {
+      console.error('Error adding bus driver:', error);
+      // Show error toast
+      
+    }
+    toast.success('Bus driver added successfully!');
+  };
+
+  const handleEditDriver = async () => {
+    if (editingDriver) {
+      // Perform the edit operation, update the specific driver
+      try {
+        const response = await fetch(`http://localhost:8090/api/busdriver/${editingDriver.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: editingDriver.name,
+            mobileNumber: editingDriver.mobileNumber,
+          }),
+        });
+
+        if (response.ok) {
+          // After editing the driver, fetch the updated list of drivers
+          const updatedResponse = await fetch('http://localhost:8090/api/busdriver');
+          if (updatedResponse.ok) {
+            const updatedData = await updatedResponse.json();
+            setDrivers(updatedData);
+          } else {
+            console.error('Failed to fetch updated bus drivers');
+          }
+
+          // Show success toast
+          toast.success('Bus driver edited successfully!');
+        } else {
+          console.error('Failed to edit bus driver');
+          // Show error toast
+          toast.error('Failed to edit bus driver');
+        }
+      } catch (error) {
+        console.error('Error editing bus driver:', error);
+        // Show error toast
+        toast.error('Error editing bus driver');
+      }
+
+      // Close the edit modal
+      setShowEditModal(false);
+      setEditingDriver(null);
+    }
+  };
+
+  const handleDeleteDriver = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8090/api/busdriver/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // After deleting the driver, fetch the updated list of drivers
+        const updatedResponse = await fetch('http://localhost:8090/api/busdriver');
+        if (updatedResponse.ok) {
+          const updatedData = await updatedResponse.json();
+          setDrivers(updatedData);
+        } else {
+          console.error('Failed to fetch updated bus drivers');
+        }
+
+        // Show success toast
+        toast.success('Bus driver deleted successfully!');
+      } else {
+        console.error('Failed to delete bus driver');
+        // Show error toast
+        toast.error('Failed to delete bus driver');
+      }
+    } catch (error) {
+      console.error('Error deleting bus driver:', error);
+      // Show error toast
+      toast.error('Error deleting bus driver');
+    }
+  };
+
+  const handleShowEditModal = (driver) => {
+    setEditingDriver(driver);
+    setShowEditModal(true);
+  };
+
+  return (<>
+  <div>
+    <Navbar/>
+  </div>
+    <div className="container mt-2">
+      <Card>
+        <Card.Body>
+          <h2>Add Bus Driver</h2>
+          <Form>
+            <Form.Group>
+              <Form.Label>Name:</Form.Label>
+              <Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} />
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Mobile Number:</Form.Label>
+              <Form.Control type="text" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} />
+            </Form.Group>
+
+            <Button variant="primary" type="button" onClick={handleAddDriver} className="mt-2">
+              Add Driver
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
+
+      <h2 className="mt-2 text-center">Bus Drivers</h2>
+      <Table striped bordered hover>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Mobile Number</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {drivers.map((driver) => (
+            <tr key={driver.id}>
+              <td>{driver.name}</td>
+              <td>{driver.mobileNumber}</td>
+              <td>
+                <Button variant="info" onClick={() => handleShowEditModal(driver)}>
+                  Edit
+                </Button>{' '}
+                <Button variant="danger" onClick={() => handleDeleteDriver(driver.id)}>
+                  Delete
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+
+      {/* Edit Driver Modal */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Bus Driver</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group>
+              <Form.Label>Name:</Form.Label>
+              <Form.Control
+                type="text"
+                value={editingDriver ? editingDriver.name : ''}
+                onChange={(e) => setEditingDriver({ ...editingDriver, name: e.target.value })}
+              />
+            </Form.Group>
+
+            <Form.Group>
+              <Form.Label>Mobile Number:</Form.Label>
+              <Form.Control
+                type="text"
+                value={editingDriver ? editingDriver.mobileNumber : ''}
+                onChange={(e) => setEditingDriver({ ...editingDriver, mobileNumber: e.target.value })}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleEditDriver}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div></>
+  );
+};
+
+export default BusDriverForm;
